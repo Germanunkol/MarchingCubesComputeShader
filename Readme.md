@@ -3,6 +3,8 @@ Marching Cubes in Compute Shader
 
 This is a sample of how to compute the isosurface of a density field with the Marching Cubes algorithm inside OpenGL/GLSL Compute Shaders.
 
+![screenshot](Screenshot.png)
+
 How it works:
 --------------
 1. The voxel data is filled into a (3D) array on the CPU and stored in a shader buffer, let's call it SB1. This shader buffer acts as input to the Marching Cubes algorithm. Note that an alternative would be to compute the density field (for example, using noise) on the GPU instead, which would eliminate the need for this shader buffer and reduce the amount of data which needs to be passed from the CPU to the GPU. However, my data will be generated on the CPU, so this system works well for me.

@@ -54,8 +54,9 @@ class Chunk():
         self.geom_shader_buffer = ShaderBuffer('chunk_geom', verts.tobytes(), GeomEnums.UH_static)
 
     def update( self, task ):
-        self.create_input_buffer()
-        self.compute_node_path.set_shader_input("InputField", self.input_shader_buffer)
+        #self.create_input_buffer()
+        #self.compute_node_path.set_shader_input("InputField", self.input_shader_buffer)
+        self.compute_node_path.set_shader_input("threshold", math.sin(task.time)*0.2 )
         return task.cont
 
     def create_geometry_node( self ):

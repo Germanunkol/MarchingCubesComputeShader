@@ -4,9 +4,10 @@ from panda3d.core import *
 
 class Chunk():
 
-    def __init__( self, num_voxels=8, voxel_size=0.15, pos=LVector3f(0,0,0) ):
+    def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0) ):
 
-        self.num_voxels = num_voxels+1  # padding!
+        self.num_voxels_per_side = voxels_per_side+1  # padding!
+        self.num_voxels = (self.num_voxels_per_side)**3
         self.voxel_size = voxel_size
         self.pos = pos
 
@@ -22,11 +23,11 @@ class Chunk():
 
     def create_input_buffer( self ):
 
-        field = [-1.0]*(self.num_voxels**3)
+        field = [-1.0]*self.num_voxels
         i = 0
-        for z in range( self.num_voxels ):
-            for y in range( self.num_voxels ):
-                for x in range( self.num_voxels ):
+        for z in range( self.num_voxels_per_side ):
+            for y in range( self.num_voxels_per_side ):
+                for x in range( self.num_voxels_per_side ):
                     #field[i] = int(100*(x-4+y*0.5*globalClock.getRealTime()*0.1))
                     #field[i] = int(100*(x-4))
                     #field[i] = ( x % 3 - 1 )
@@ -42,10 +43,12 @@ class Chunk():
     def create_geometry_buffer( self ):
 
         vertices = []
-        max_tris_per_voxel = 15     # Maximum number of verts created per voxel
-        full_num_voxels = (self.num_voxels+1)**3
-        for i in range( full_num_voxels*max_tris_per_voxel ):
-            vertices += [0,0,0] # x,y,z
+        max_points_per_voxel = 15     # Maximum number of verts created per voxel
+        for i in range( self.num_voxels*max_points_per_voxel ):
+            #vertices += [0,0,0] # position x,y,z
+            #vertices += [0,0,0] # normal x,y,z
+            #vertices += [random.random(), random.random(), random.random()] # normal x,y,z
+            vertices += [0,0,0,0,random.random(),random.random(),random.random(),0]
        
         verts = array('f', vertices)
         self.geom_shader_buffer = ShaderBuffer('chunk_geom', verts.tobytes(), GeomEnums.UH_static)
@@ -63,7 +66,8 @@ class Chunk():
 
         # This represents a draw call, indicating how many vertices we want to draw.
         tris = GeomTriangles(GeomEnums.UH_static)
-        tris.add_next_vertices( (self.num_voxels**3) * 15)
+        max_points_per_voxel = 15     # Maximum number of verts created per voxel
+        tris.add_next_vertices( self.num_voxels * max_points_per_voxel )
 
         # The geom which will be rendered. The empty list of verts will be filled from the
         # ShaderBuffer later on.

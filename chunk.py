@@ -14,6 +14,8 @@ class Chunk():
         scale = 0.6
         self.noise = PerlinNoise3( scale, scale, scale, 
                 32,seed = 1 )
+        self.textureGround = loader.loadTexture( "Textures/rocks_ground_03_diff_2k.png" )
+        self.textureWall = loader.loadTexture( "Textures/rock_wall_02_diff_2k.png" )
 
         self.create_input_buffer()
         self.create_geometry_buffer()
@@ -56,7 +58,8 @@ class Chunk():
     def update( self, task ):
         #self.create_input_buffer()
         #self.compute_node_path.set_shader_input("InputField", self.input_shader_buffer)
-        self.compute_node_path.set_shader_input("threshold", math.sin(task.time)*0.2 )
+        #self.compute_node_path.set_shader_input("threshold", math.sin(task.time)*0.2 )
+        self.compute_node_path.set_shader_input("threshold", math.sin(0)*0.2 )
         return task.cont
 
     def create_geometry_node( self ):
@@ -85,6 +88,9 @@ class Chunk():
         self.node_path = NodePath( geom_node )
         self.node_path.set_shader(shader)
         self.node_path.set_shader_input("GeomBuffer", self.geom_shader_buffer)
+        self.node_path.set_shader_input( "textureGround", self.textureGround )
+        self.node_path.set_shader_input( "textureWall", self.textureWall )
+
         self.node_path.set_two_sided(True)
         self.node_path.set_pos( self.pos )
         #self.node_path.set_attrib(ColorBlendAttrib.make(ColorBlendAttrib.M_add, ColorBlendAttrib.O_incoming_alpha, ColorBlendAttrib.O_one))

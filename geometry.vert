@@ -12,10 +12,16 @@ out vec3 color;
 
 out vec3 normal_worldspace;
 
+out vec2 uv_x;
+out vec2 uv_y;
+out vec2 uv_z;
+
 void main() {
   //int triID = gl_VertexID / 3;
 
-  vec4 pos = p3d_ModelViewMatrix * vec4(vertices[gl_VertexID].pos, 1);
+  vec3 local_pos = vertices[gl_VertexID].pos;
+
+  vec4 pos = p3d_ModelViewMatrix * vec4(local_pos,1);
 
   /*int vtxID = gl_VertexID % 3;
   if( vtxID == 0 )
@@ -26,9 +32,14 @@ void main() {
 	  color = vec3(1, 0.5, 1);*/
 
   //color = vertices[gl_VertexID].pos;
-  color = vertices[gl_VertexID].normal;
+  float brightness = dot( vertices[gl_VertexID].normal, vec3(0,0,1) );
+  color = vec3( brightness, brightness, brightness );
   //color = vec3(1, 0.5, 1);
   //normal_worldspace = vertices[gl_VertexID].normal;
+
+  uv_x = local_pos.yz;
+  uv_y = local_pos.xz;
+  uv_z = local_pos.xy;
 
   gl_Position = p3d_ProjectionMatrix * pos;
 }

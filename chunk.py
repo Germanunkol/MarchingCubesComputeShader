@@ -2,9 +2,11 @@ from array import array
 import random, math
 from panda3d.core import *
 
+profile_textures = TexturePool.load2dTextureArray("Textures/Profile#.png")
+
 class Chunk():
 
-    def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0) ):
+    def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0), tunnels=[] ):
 
         self.num_voxels_per_side = voxels_per_side+1  # padding!
         self.num_voxels = (self.num_voxels_per_side)**3
@@ -17,30 +19,20 @@ class Chunk():
         self.textureGround = loader.loadTexture( "Textures/rocks_ground_03_diff_2k.png" )
         self.textureWall = loader.loadTexture( "Textures/rock_wall_02_diff_2k.png" )
 
-        self.create_input_buffer()
+        self.input_shader_buffer = ShaderBuffer("chunk_input",
+                array('f', tunnels ).tobytes(),
+                GeomEnums.UH_static )
+
+        #self.create_input_buffer()
         self.create_geometry_buffer()
         self.create_geometry_node()
         self.create_compute_node()
 
 
-    def create_input_buffer( self ):
-
-        field = [-1.0]*self.num_voxels
-        i = 0
-        for z in range( self.num_voxels_per_side ):
-            for y in range( self.num_voxels_per_side ):
-                for x in range( self.num_voxels_per_side ):
-                    #field[i] = int(100*(x-4+y*0.5*globalClock.getRealTime()*0.1))
-                    #field[i] = int(100*(x-4))
-                    #field[i] = ( x % 3 - 1 )
-                    px = self.pos.x + x*self.voxel_size
-                    py = self.pos.y + y*self.voxel_size
-                    pz = self.pos.z + z*self.voxel_size
-                    py += globalClock.getRealTime()*0.2
-                    field[i] = self.noise( px, py, pz )
-                    i += 1
-        data = array('f', field)
-        self.input_shader_buffer = ShaderBuffer('chunk_input', data.tobytes(), GeomEnums.UH_static)
+    #def create_input_buffer( self ):
+#
+        #data = array('f', field)
+        #self.input_shader_buffer = ShaderBuffer('chunk_input', data.tobytes(), GeomEnums.UH_static)
 
     def create_geometry_buffer( self ):
 
@@ -59,7 +51,7 @@ class Chunk():
         #self.create_input_buffer()
         #self.compute_node_path.set_shader_input("InputField", self.input_shader_buffer)
         #self.compute_node_path.set_shader_input("threshold", math.sin(task.time)*0.2 )
-        self.compute_node_path.set_shader_input("threshold", math.sin(0)*0.2 )
+        self.compute_node_path.set_shader_input("threshold", 0 )
         return task.cont
 
     def create_geometry_node( self ):
@@ -110,6 +102,8 @@ class Chunk():
         self.compute_node_path.set_shader_input("GeomBuffer", self.geom_shader_buffer)
         self.compute_node_path.set_shader_input("voxel_size", self.voxel_size)
         self.compute_node_path.set_shader_input("threshold", 0 )
+        self.compute_node_path.set_shader_input("chunk_position", self.pos )
+        self.compute_node_path.set_shader_input("profile_textures", profile_textures )
 
     def reparent_to( self, parent ):
         self.node_path.reparent_to( parent )

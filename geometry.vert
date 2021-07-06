@@ -23,19 +23,9 @@ void main() {
 
   vec4 pos = p3d_ModelViewMatrix * vec4(local_pos,1);
 
-  /*int vtxID = gl_VertexID % 3;
-  if( vtxID == 0 )
-	  color = vec3(1, 1, 1);
-  else if( vtxID == 1 )
-	  color = vec3(1, 1, 0.5);
-  else
-	  color = vec3(1, 0.5, 1);*/
-
-  //color = vertices[gl_VertexID].pos;
   float brightness = dot( vertices[gl_VertexID].normal, vec3(0,0,1) );
   color = vec3( brightness, brightness, brightness );
-  //color = vec3(1, 0.5, 1);
-  //normal_worldspace = vertices[gl_VertexID].normal;
+  normal_worldspace = vertices[gl_VertexID].normal;
 
   uv_x = local_pos.yz;
   uv_y = local_pos.xz;

@@ -6,15 +6,12 @@ const uint chunk_size2 = chunk_size*chunk_size;
 layout (local_size_x = 9, local_size_y = 9, local_size_z = 9) in;
 
 #pragma include "common.glsl"
+#pragma include "density_function.glsl"
 #pragma include "triangle_table.glsl"
-
-
-layout(std430,binding=3) readonly buffer InputField {
-  float data[chunk_size*chunk_size*chunk_size];
-};
 
 uniform float voxel_size = 1;
 uniform float threshold = 0.0;
+uniform vec3 chunk_position;
 
 vec3 createVert( vec3 p0, vec3 p1, float d0, float d1 )
 {
@@ -76,7 +73,7 @@ void main() {
 
   // Retrieve all necessary data from neighboring cells:
   float vox_data[8];
-  vox_data[0] = data[ contIndex( index.x, index.y, index.z ) ];
+  /*vox_data[0] = data[ contIndex( index.x, index.y, index.z ) ];
   vox_data[1] = data[ contIndex( index.x+1, index.y, index.z ) ];
   vox_data[2] = data[ contIndex( index.x+1, index.y+1, index.z ) ];
   vox_data[3] = data[ contIndex( index.x, index.y+1, index.z ) ];
@@ -84,7 +81,17 @@ void main() {
   vox_data[4] = data[ contIndex( index.x, index.y, index.z+1 ) ];
   vox_data[5] = data[ contIndex( index.x+1, index.y, index.z+1 ) ];
   vox_data[6] = data[ contIndex( index.x+1, index.y+1, index.z+1 ) ];
-  vox_data[7] = data[ contIndex( index.x, index.y+1, index.z+1 ) ];
+  vox_data[7] = data[ contIndex( index.x, index.y+1, index.z+1 ) ];*/
+
+  vox_data[0] = sampleField( chunk_position + vec3(index)*voxel_size );
+  vox_data[1] = sampleField( chunk_position + (vec3(index)+vec3(1,0,0))*voxel_size );
+  vox_data[2] = sampleField( chunk_position + (vec3(index)+vec3(1,1,0))*voxel_size );
+  vox_data[3] = sampleField( chunk_position + (vec3(index)+vec3(0,1,0))*voxel_size );
+
+  vox_data[4] = sampleField( chunk_position + (vec3(index)+vec3(0,0,1))*voxel_size );
+  vox_data[5] = sampleField( chunk_position + (vec3(index)+vec3(1,0,1))*voxel_size );
+  vox_data[6] = sampleField( chunk_position + (vec3(index)+vec3(1,1,1))*voxel_size );
+  vox_data[7] = sampleField( chunk_position + (vec3(index)+vec3(0,1,1))*voxel_size );
 
   // Turn this information into a triangle list index:
   int triangleTypeIndex = 0;

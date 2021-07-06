@@ -27,3 +27,4 @@ Limitations:
 Credits:
 --------------
 This was inspired by the "embers" sample from rdb, which shows how to pass geometry from a compute shader to later shader stages.
+Textures are from Texture Haven (https://texturehaven.com/) - thanks!

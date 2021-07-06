@@ -6,7 +6,7 @@ profile_textures = TexturePool.load2dTextureArray("Textures/Profile#.png")
 
 class Chunk():
 
-    def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0), tunnels=[] ):
+    def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0), input_shader_buffer=None ):
 
         self.num_voxels_per_side = voxels_per_side+1  # padding!
         self.num_voxels = (self.num_voxels_per_side)**3
@@ -19,9 +19,7 @@ class Chunk():
         self.textureGround = loader.loadTexture( "Textures/rocks_ground_03_diff_2k.png" )
         self.textureWall = loader.loadTexture( "Textures/rock_wall_02_diff_2k.png" )
 
-        self.input_shader_buffer = ShaderBuffer("chunk_input",
-                array('f', tunnels ).tobytes(),
-                GeomEnums.UH_static )
+        self.input_shader_buffer = input_shader_buffer
 
         #self.create_input_buffer()
         self.create_geometry_buffer()

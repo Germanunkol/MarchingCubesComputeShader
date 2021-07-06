@@ -32,7 +32,7 @@ void main() {
   vec3 blending = getTriPlanarBlend(normal_worldspace);
   vec4 diffuseCol = wallTexColX*blending.x + wallTexColY*blending.y + groundTexCol*blending.z;
 
-  p3d_FragColor = vec4(diffuseCol.rgb*(0.5*color.r+0.5), 1);
+  p3d_FragColor = vec4(diffuseCol.rgb*(0.1*color.r+0.8), 1);
   //p3d_FragColor = vec4(diffuseCol.rgb, 1);
 }
 

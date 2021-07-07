@@ -46,7 +46,8 @@ float sampleTunnel( vec3 pos, Tunnel tunnel )
 	vec3 offset = projection - pos;
 	float offsetDist = length( offset );
 
-	if( offsetDist > max( tunnel.size1, tunnel.size2 ) )
+	//if( offsetDist > max( tunnel.size1, tunnel.size2 ) )
+	if( offsetDist > size )
 		return -1;
 
 	vec3 sideVec = normalize( cross( nodePos1 - nodePos2, vec3(0,0,1) ) );

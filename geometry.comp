@@ -1,9 +1,9 @@
 #version 430
 
-const uint chunk_size = 9;
+const uint chunk_size = 8;
 const uint chunk_size2 = chunk_size*chunk_size;
 
-layout (local_size_x = 9, local_size_y = 9, local_size_z = 9) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 #pragma include "common.glsl"
 #pragma include "density_function.glsl"
@@ -64,9 +64,9 @@ void createVerts( vec3 voxel_index, inout vec3 pos[12], float vox_data[8] )
 void main() {
 
   // Make sure this is not a border cell (otherwise neighbor lookup in the next step would fail):
-  if( gl_LocalInvocationID.x >= chunk_size-1 ||
-		  gl_LocalInvocationID.y >= chunk_size-1 ||
-		  gl_LocalInvocationID.z >= chunk_size-1 )
+  if( gl_LocalInvocationID.x >= chunk_size ||
+		  gl_LocalInvocationID.y >= chunk_size ||
+		  gl_LocalInvocationID.z >= chunk_size )
 		  return;
 
   uvec3 index = gl_LocalInvocationID;
@@ -123,7 +123,7 @@ void main() {
 	  	  vertices[targetVertIndex].normal = curNormal;
 	  } else {
 	  	  vertices[targetVertIndex].pos = vec3(0,0,0);
-	  	  vertices[targetVertIndex].normal = vec3(0,1,0);
+	  	  vertices[targetVertIndex].normal = vec3(0,0,0);
 	  }
   }
 }

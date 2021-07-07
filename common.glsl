@@ -2,9 +2,9 @@
 
 struct Vertex {
   vec3 pos;
-  float scale;
+  float _1;
   vec3 normal;
-  float size;
+  float _2;
 };
 
 layout(std430, binding=1) buffer GeomBuffer {

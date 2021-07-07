@@ -8,8 +8,9 @@ class Chunk():
 
     def __init__( self, voxels_per_side=8, voxel_size=0.15, pos=LVector3f(0,0,0), input_shader_buffer=None ):
 
-        self.num_voxels_per_side = voxels_per_side+1  # padding!
+        self.num_voxels_per_side = voxels_per_side
         self.num_voxels = (self.num_voxels_per_side)**3
+        self.num_voxels_padded = (self.num_voxels_per_side+1)**3        # padding!
         self.voxel_size = voxel_size
         self.pos = pos
 
@@ -34,23 +35,28 @@ class Chunk():
 
     def create_geometry_buffer( self ):
 
-        vertices = []
         max_points_per_voxel = 15     # Maximum number of verts created per voxel
-        for i in range( self.num_voxels*max_points_per_voxel ):
+        values_per_point = 8
+        size_of_float = 4   # in bytes
+        #vertices = [0.0]*self.num_voxels*max_points_per_voxel*values_per_point
+        #for i in range( self.num_voxels*max_points_per_voxel ):
             #vertices += [0,0,0] # position x,y,z
             #vertices += [0,0,0] # normal x,y,z
             #vertices += [random.random(), random.random(), random.random()] # normal x,y,z
-            vertices += [0,0,0,0,random.random(),random.random(),random.random(),0]
+        #    vertices += [0,0,0,0,0,0,0,0]
        
-        verts = array('f', vertices)
-        self.geom_shader_buffer = ShaderBuffer('chunk_geom', verts.tobytes(), GeomEnums.UH_static)
+        #verts = array('f', vertices)
+        #print("Length", len(verts), len(verts.tobytes()))
+        #print("Estimated:", self.num_voxels*max_points_per_voxel*values_per_point*size_of_float )
+        bufferSize = self.num_voxels*max_points_per_voxel*values_per_point*size_of_float
+        self.geom_shader_buffer = ShaderBuffer('chunk_geom',
+                bufferSize,
+                GeomEnums.UH_static)
 
-    def update( self, task ):
-        #self.create_input_buffer()
-        #self.compute_node_path.set_shader_input("InputField", self.input_shader_buffer)
-        #self.compute_node_path.set_shader_input("threshold", math.sin(task.time)*0.2 )
-        self.compute_node_path.set_shader_input("threshold", 0 )
-        return task.cont
+    def triggerUpdate( self ):
+
+        sattr = self.compute_node_path.get_attrib(ShaderAttrib)
+        base.graphicsEngine.dispatch_compute((1, 1, 1), sattr, base.win.get_gsg())
 
     def create_geometry_node( self ):
 
@@ -92,7 +98,8 @@ class Chunk():
         compute_node.add_dispatch( 1, 1, 1 )
 
         # Add compute node to the scene graph:
-        self.compute_node_path = self.node_path.attach_new_node( compute_node )
+        #self.compute_node_path = self.node_path.attach_new_node( compute_node )
+        self.compute_node_path = NodePath("compute_node")
 
         shader = Shader.load_compute(Shader.SL_GLSL, "geometry.comp")
         self.compute_node_path.set_shader( shader )

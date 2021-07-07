@@ -4,15 +4,20 @@ from chunk import Chunk
 from node import Node
 import random, math
 from array import array
+import cProfile
 
 base = ShowBase()
 
-voxel_size = 0.5
+voxel_size = 0.25
 voxels_per_chunk = 8
 chunk_size = voxels_per_chunk*voxel_size
 
-map_size = 24 # in meters
+map_size = 20 # in meters
 half_map_size = map_size*0.5 # in meters
+
+num_chunks_per_size = int(map_size/chunk_size) + 1
+
+print(f"Number of chunks: {num_chunks_per_size}^3")
 
 nodes = []
 for i in range(10):
@@ -20,15 +25,29 @@ for i in range(10):
     pos = LVector3f( random.random()*map_size-half_map_size,
             random.random()*map_size-half_map_size,
             random.random()*map_size-half_map_size )
-    nodes.append( Node( index=0, pos=pos, size=random.random()*2+0.5, profile_index=profile ) )
+    nodes.append( Node( index=i, pos=pos, size=random.random()*2.2+0.5, profile_index=profile ) )
 
 tunnels = []
 
 for i in range(20):
     n1 = nodes[i % len(nodes)]
-    n2 = random.choice( nodes )
-    tunnels.append( (n1, n2) )
-#tunnels.append( (nodes[2], nodes[1]) )
+    # find closest neighbor:
+    closestDist = 999999999
+    closestNode = None
+    for other in nodes:
+        if not n1 == other:
+            d = (n1.pos - other.pos).length()
+            if d < closestDist:
+                closestNode = other
+
+    tunnels.append( (n1, closestNode) )
+
+#nodes = [
+#    Node( index=0, pos=LVector3f(0,-10,0), size=3, profile_index=1),
+#    Node( index=1, pos=LVector3f(0,10,0), size=1, profile_index=0),
+#    Node( index=2, pos=LVector3f(0,0,10), size=5, profile_index=2)
+#        ]
+#tunnels = [(nodes[0], nodes[1]), (nodes[1],nodes[2])]
 
 tunnels_serialized = []
 for t in tunnels:
@@ -51,64 +70,39 @@ input_shader_buffer = ShaderBuffer("chunk_input",
                 GeomEnums.UH_static )
 
 chunks = []
+chunks_requiring_update = []
 
-for x in range(-3,4):
-    for y in range(-3,4):
-        for z in range(-3,4):
-            pos = LVector3f( chunk_size*x, chunk_size*y, chunk_size*z )
-            chunk = Chunk( voxels_per_side=voxels_per_chunk, voxel_size=voxel_size, pos=pos, input_shader_buffer=input_shader_buffer )
-            chunk.reparent_to( base.render )
-            #chunk.compute_node_path.reparent_to( base.render )
-            base.taskMgr.add( chunk.update, "update" )
-            chunks.append(chunk)
+def createChunks():
+    start = -int(num_chunks_per_size/2)
+    stop = int(num_chunks_per_size/2)+1
+    print(start, stop)
+    for x in range(start,stop):
+        for y in range(start,stop):
+            for z in range(start,stop):
+                pos = LVector3f( chunk_size*x, chunk_size*y, chunk_size*z )
+                chunk = Chunk( voxels_per_side=voxels_per_chunk, voxel_size=voxel_size, pos=pos, input_shader_buffer=input_shader_buffer )
+                chunk.reparent_to( base.render )
+                #chunk.compute_node_path.reparent_to( base.render )
+                #base.taskMgr.add( chunk.update, "update" )
+                chunks.append(chunk)
+                chunks_requiring_update.append(chunk)
 
-base.graphicsEngine.render_frame()
-base.graphicsEngine.render_frame()
-for c in chunks:
-    c.compute_node_path.detachNode()
+#cProfile.runctx( 'createChunks()', None, locals(), "chunk_stats")
+createChunks()
 
 def update( task ):
+    if len(chunks_requiring_update) > 0:
+        print("Remaining chunks:", len(chunks_requiring_update))
+        i = 0
+        while i < 100 and len(chunks_requiring_update) > 0:
+            c = chunks_requiring_update.pop()
+            c.triggerUpdate()
+            i += 1
 
-    nodes = []
-    nodes.append( Node( index=0, pos=LVector3f(0.5,0,-2.5), size=1.5, profile_index=0 ) )
-    nodes.append( Node( index=1, pos=LVector3f(0,0,0), size=0.8, profile_index=1 ) )
-    nodes.append( Node( index=2, pos=LVector3f(math.cos(task.time)*4,math.sin(task.time)*4.0, math.sin(task.time*0.5)*0.7), size=1.2, profile_index=2 ) )
-    nodes.append( Node( index=3, pos=LVector3f(5,4,0), size=0.8, profile_index=1 ) )
-    nodes.append( Node( index=4, pos=LVector3f(-5,-4,2), size=1.0, profile_index=2 ) )
 
-    tunnels = []
-    tunnels.append( (nodes[0], nodes[1]) )
-    tunnels.append( (nodes[1], nodes[2]) )
-    tunnels.append( (nodes[1], nodes[3]) )
-    tunnels.append( (nodes[1], nodes[4]) )
-    tunnels.append( (nodes[2], nodes[4]) )
-    #tunnels.append( (nodes[2], nodes[1]) )
-
-    tunnels_serialized = []
-    for t in tunnels:
-        node1 = t[0]
-        node2 = t[1]
-        t_s = []
-        t_s += [node1.pos.x, node1.pos.y, node1.pos.z, node1.size]
-        t_s += [node2.pos.x, node2.pos.y, node2.pos.z, node2.size]
-        t_s += [float(node1.profile_index), float(node2.profile_index)]
-        t_s += [0,0]    # padding
-        # Pad each array element to 16 bytes:
-        #padding = 16 - len(t_s) % 16
-        #if padding != 0:
-            #t_s += [0.0]*padding
-
-        tunnels_serialized += t_s
-
-    input_shader_buffer = ShaderBuffer("chunk_input",
-            array('f', tunnels_serialized ).tobytes(),
-            GeomEnums.UH_static )
-    for c in chunks:
-        #c.input_shader_buffer = input_shader_buffer
-        c.compute_node_path.set_shader_input("InputField", input_shader_buffer)
     return task.cont
 
-#base.taskMgr.add( update, "update" )
+base.taskMgr.add( update, "update" )
 base.set_background_color(0, 0, 0)
 base.setFrameRateMeter(True)
 
